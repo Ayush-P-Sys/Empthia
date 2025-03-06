@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to Empathia</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f7fa;
+        color: #333;
+        text-align: center;
+        padding-top: 80px;
+      }
+
+      /* Chat Section (Initially Hidden) */
+      #chat-section {
+        display: none;
+        margin-top: 30px;
+        padding: 20px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        width: 60%;
+        margin: auto;
+      }
+
+      /* Get Started Button */
+      .get-started {
+        margin-top: 20px;
+        padding: 12px 24px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #fff;
+        background: linear-gradient(45deg, #7a9cbc, #4a6fa5);
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .get-started:hover {
+        background: linear-gradient(45deg, #5c7fa3, #3a5b89);
+        transform: scale(1.05);
+      }
+
+      input,
+      button {
+        padding: 10px;
+        font-size: 1rem;
+        margin-top: 10px;
+      }
+
+      #response-area {
+        margin-top: 15px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        min-height: 50px;
+        background: #e3f2fd;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Welcome to Empathia</h1>
+    <button class="get-started" onclick="showChat()">Get Started</button>
+
+    <!-- Chat Section (Hidden by Default) -->
+    <div id="chat-section">
+      <h2>Chat with Empathia</h2>
+      <input type="text" id="user-input" placeholder="Ask something..." />
+      <button onclick="sendMessage()">Send</button>
+      <p id="response-area">Your response will appear here.</p>
+    </div>
+
+    <script>
+      function showChat() {
+        document.getElementById("chat-section").style.display = "block";
+      }
+
+      function sendMessage() {
+        const userInput = document.getElementById("user-input").value;
+        document.getElementById("response-area").textContent = "Thinking...";
+
+        fetch("/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: userInput }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("response-area").textContent =
+              data.response;
+          })
+          .catch((error) => {
+            document.getElementById("response-area").textContent =
+              "Error: " + error;
+          });
+      }
+    </script>
+  </body>
+</html>
