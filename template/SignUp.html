@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signup Page</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f3f4f6;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .signup-container {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
+      }
+
+      h2 {
+        text-align: center;
+        margin-bottom: 1.5rem;
+      }
+
+      input {
+        width: 100%;
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+
+      button {
+        width: 100%;
+        padding: 0.75rem;
+        background: #4f46e5;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 1rem;
+      }
+
+      button:hover {
+        background: #4338ca;
+      }
+
+      .error {
+        color: red;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="signup-container">
+      <h2>Sign Up</h2>
+      <form id="signup-form">
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <input
+          type="password"
+          id="confirm-password"
+          placeholder="Confirm Password"
+          required
+        />
+        <p class="error" id="error-msg"></p>
+        <button type="submit">Create Account</button>
+      </form>
+    </div>
+
+    <script>
+      const form = document.getElementById("signup-form");
+      const errorMsg = document.getElementById("error-msg");
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const confirmPassword = document
+          .getElementById("confirm-password")
+          .value.trim();
+
+        if (!email || !password || !confirmPassword) {
+          errorMsg.textContent = "All fields are required.";
+          return;
+        }
+
+        if (password.length < 6) {
+          errorMsg.textContent = "Password must be at least 6 characters.";
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          errorMsg.textContent = "Passwords do not match.";
+          return;
+        }
+
+        try {
+          if (!email || !password) {
+            errorMsg.textContent = "Please enter both email and password.";
+            return;
+          }
+
+          const response = await fetch("/SignUp", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, pass: password }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            alert(result.message || "Account created successfully!");
+
+            form.reset();
+            window.location.href = "/Login.html";
+            errorMsg.textContent = "";
+          } else {
+            errorMsg.textContent = result.error || "Something went wrong.";
+          }
+        } catch (err) {
+          errorMsg.textContent = "Network error.";
+          console.error(err);
+        }
+      });
+    </script>
+  </body>
+</html>

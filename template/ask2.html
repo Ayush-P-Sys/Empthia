@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Chat</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #1e1e2e, #282a36);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+      .chat-container {
+        width: 95%;
+        max-width: 500px;
+        background: rgba(40, 42, 54, 0.9);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+        border-radius: 15px;
+        overflow: hidden;
+        border: 2px solid #50fa7b;
+      }
+      .chat-header {
+        background: linear-gradient(90deg, #6272a4, #50fa7b);
+        color: white;
+        padding: 16px;
+        text-align: center;
+        font-size: 22px;
+        font-weight: bold;
+      }
+      .chat-box {
+        height: 400px;
+        padding: 15px;
+        overflow-y: auto;
+        border-bottom: 2px solid #44475a;
+        display: flex;
+        flex-direction: column;
+        scroll-behavior: smooth;
+      }
+      .chat-message {
+        background: #44475a;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        max-width: 80%;
+        color: #f8f8f2;
+        align-self: flex-start;
+        animation: fadeIn 0.3s ease-in-out;
+        word-wrap: break-word; /* Ensure long words wrap */
+        white-space: pre-wrap; /* Preserve spaces and wrap */
+        overflow-wrap: break-word; /* Break long words if needed */
+      }
+
+      .chat-input {
+        display: flex;
+        padding: 12px;
+        background: #282a36;
+      }
+      .chat-input select,
+      .chat-input input {
+        flex: 1;
+        padding: 12px;
+        border: 2px solid #50fa7b;
+        background: #1e1e2e;
+        color: #f8f8f2;
+        border-radius: 8px;
+        margin-right: 8px;
+        outline: none;
+        transition: 0.3s;
+      }
+      .chat-input input:focus {
+        border-color: #3be57a;
+        box-shadow: 0 0 8px #50fa7b;
+      }
+      .chat-input button {
+        background: linear-gradient(90deg, #50fa7b, #3be57a);
+        color: #282a36;
+        border: none;
+        padding: 12px 16px;
+        cursor: pointer;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: 0.3s;
+      }
+      .chat-input button:hover {
+        background: #50fa7b;
+        box-shadow: 0 0 10px #50fa7b;
+      }
+      .chat-input button:disabled {
+        background: #888;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chat-container">
+      <div class="chat-header">Chat With AI</div>
+      <div class="chat-box" id="chat-box"></div>
+      <div class="chat-input">
+        <select id="model">
+          <option value="caspian:latest">Dr.Caspian Psychiatrist</option>
+          <option value="I_ver_1:latest">Ai Girlfriend</option>
+          <option value="potaTOES33/healthmateai:latest">Diet Planner</option>
+        </select>
+        <input
+          type="text"
+          id="message"
+          placeholder="Type your message..."
+          onkeypress="handleKeyPress(event)"
+        />
+        <button id="send-button" onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+
+    <script>
+      function sendMessage() {
+        let messageInput = document.getElementById("message");
+        let sendButton = document.getElementById("send-button");
+        let modelSelect = document.getElementById("model");
+        let chatBox = document.getElementById("chat-box");
+
+        let message = messageInput.value.trim();
+        let selectedModel = modelSelect.value;
+
+        if (message === "") return;
+
+        // Disable input and button to prevent multiple messages
+        messageInput.disabled = true;
+        sendButton.disabled = true;
+
+        // Add user message to chat box
+        let userMessage = document.createElement("div");
+        userMessage.classList.add("chat-message");
+        userMessage.innerHTML = `<strong>You:</strong> ${message}`;
+        chatBox.appendChild(userMessage);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // Clear input field
+        messageInput.value = "";
+
+        // Show AI is thinking
+        let botThinking = document.createElement("div");
+        botThinking.classList.add("chat-message");
+        botThinking.style.alignSelf = "flex-end"; // Align to the right
+        botThinking.innerHTML = `<strong>AI:</strong> Thinking...`;
+        chatBox.appendChild(botThinking);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // Send request to Flask backend
+        fetch("/ask2", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: message, model: selectedModel }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            chatBox.removeChild(botThinking); // Remove "Thinking..." message
+
+            let botMessage = document.createElement("div");
+            botMessage.classList.add("chat-message");
+            botMessage.style.alignSelf = "flex-end"; // Align AI messages to the right
+            botMessage.innerHTML = `<strong>AI:</strong> ${data.response || "Error in response"}`;
+            chatBox.appendChild(botMessage);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Re-enable input and button after response
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.focus();
+          })
+          .catch((error) => {
+            chatBox.removeChild(botThinking); // Remove "Thinking..." message
+            console.error("Error:", error);
+
+            let errorMessage = document.createElement("div");
+            errorMessage.classList.add("chat-message");
+            errorMessage.style.color = "red";
+            errorMessage.innerHTML = `<strong>AI:</strong> Error in fetching response`;
+            chatBox.appendChild(errorMessage);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Re-enable input and button after error
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+          });
+      }
+
+      function handleKeyPress(event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          sendMessage();
+        }
+      }
+    </script>
+  </body>
+</html>

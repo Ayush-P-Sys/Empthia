@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Page</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+      }
+
+      body {
+        background: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      .container {
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
+      }
+
+      h2 {
+        text-align: center;
+        margin-bottom: 1.5rem;
+      }
+
+      input {
+        width: 100%;
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+
+      button {
+        width: 100%;
+        padding: 0.75rem;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 1rem;
+      }
+
+      button:hover {
+        background: #2563eb;
+      }
+
+      .signup-btn {
+        background: #10b981;
+        margin-top: 0.5rem;
+      }
+
+      .signup-btn:hover {
+        background: #059669;
+      }
+
+      .error {
+        color: red;
+        font-size: 0.9rem;
+        text-align: center;
+      }
+
+      .center-text {
+        text-align: center;
+        margin-top: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Login</h2>
+      <form id="login-form">
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="pass" placeholder="Password" required />
+        <p class="error" id="error-msg"></p>
+        <button type="submit">Login</button>
+      </form>
+
+      <div class="center-text">
+        <p>Don't have an account?</p>
+        <button class="signup-btn" onclick="redirectToSignup()">Sign Up</button>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById("login-form");
+      const errorMsg = document.getElementById("error-msg");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("pass").value.trim();
+
+        if (!email || !password) {
+          errorMsg.textContent = "Please fill out all fields.";
+          return;
+        }
+
+        try {
+          if (!email || !password) {
+            errorMsg.textContent = "Please enter both email and password.";
+            return;
+          }
+
+          const response = await fetch("/Login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email: email, pass: password }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            alert(result.message);
+            window.location.href = result.redirect;
+          } else {
+            errorMsg.textContent = result.error || "Invalid credentials.";
+          }
+        } catch (err) {
+          errorMsg.textContent = "Network error.";
+          console.error(err);
+        }
+      });
+
+      function redirectToSignup() {
+        window.location.href = "SignUp.html";
+      }
+    </script>
+  </body>
+</html>
