@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify,Response, session ,redirect,url_for
 import ollama
+from ModelSlection_Response import Model_Reply
 from Login_Signup import *
 
 app = Flask(__name__, template_folder="template/")
@@ -62,8 +63,12 @@ def Check():
     IsUser = Check_user(Uemail, Upass)
 
     if IsUser:
-        session['user'] = Uemail
-        return { "success": True, "redirect": "/", "message": "Welcome!" }
+      user_id = Get_user_id(Uemail)
+
+      # Store in session
+      session['user'] = Uemail
+      session['user_id'] = user_id
+      return { "success": True, "redirect": "/", "message": "Welcome!" }
 
     else:
         return jsonify({"error": "Email or password incorrect."}), 500
@@ -82,19 +87,26 @@ def ask_page():
 
 @app.route("/ask2", methods=["POST"])
 def ask():
-    try:
-        data = request.get_json()  # Receive JSON data
-        user_input = data.get("message", "")
-        model_name = data.get("model", "caspian:latest")  # Default model if not provided
+  try:
+    if 'user_id' not in session:
+        return jsonify({"error": "Not authenticated."}), 401
 
-        if not user_input.strip():
-            return jsonify({"error": "Message cannot be empty"}), 400
+    user_id = session['user_id']
 
-        response = ollama.chat(model=model_name, messages=[{"role": "user", "content": user_input}])
-        return jsonify({"response": response["message"]["content"]})  # Send JSON response
+    data = request.get_json()
+    user_input = data.get("message", "")
+    model_name = data.get("model","")
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    if not user_input.strip():
+        return jsonify({"error": "Message cannot be empty"}), 400
+
+
+    response = Model_Reply(user_id,10, model_name, user_input)
+
+    return jsonify({"response": response})
+
+  except Exception as e:
+      return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":

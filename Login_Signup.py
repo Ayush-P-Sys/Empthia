@@ -26,13 +26,6 @@ def AddUser( Email:str|None , Password:str|None )->bool:
         ''', (Email, Password))
     conn.commit()
 
-
-    # # testing db ->
-    # csr.execute("SELECT * FROM Users")
-    # print(csr.fetchall())
-    # conn.commit()
-
-
     conn.close()
     return True
   except Exception as e:
@@ -63,3 +56,19 @@ def Check_user(email: str | None, password: str | None) -> bool:
     except Exception as e:
         print("Database error:", e)
         return False
+
+def Get_user_id(email: str) -> int | None:
+  try:
+    conn = sqlite3.connect("UserLogin.db")
+    csr = conn.cursor()
+
+    csr.execute("SELECT Id FROM Users WHERE email = ?", (email,))
+    result = csr.fetchone()
+
+    conn.close()
+
+    return result[0] if result else None
+
+  except Exception as e:
+    print("DB error:", e)
+    return None
