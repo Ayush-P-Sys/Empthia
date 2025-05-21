@@ -1,64 +1,55 @@
-"""
-
-store history of chats mainly used on I_ver model
-
-Send them to AI as a context of conversation
-
-  for perfomance reasons i will only give it the last 10 conversation messages
-  this will contain 5 last user quetions and last 5 ai response
-
-"""
-
-
+import ollama
 import sqlite3
 
-
-
-
-
-def StoreConvo(user_id:int|None , User_messg:str|None , Ai_response:str|None):
-  try:
-
-    conn =sqlite3.connect("Convos.db")
-    csr = conn.cursor()
-
-    csr.execute('''
+def Store(UserM:str , AiRes:str , UserId:int)-> bool:
+    try:
+        conn = sqlite3.connect("Convos.db")
+        csr = conn.cursor()
+        csr.execute('''
       CREATE TABLE IF NOT EXISTS  Convo(
               Id INTEGER PRIMARY KEY AUTOINCREMENT,
-              User_id INTEGER NOT NULL,
-              U_Messg TEXT NOT NULL,
-              AI_res TEXT NOT NULL
+              User TEXT NOT NULL,
+              Aires TEXT NOT NULL,
+              userId INTEGER
         )
     ''')
-    csr.execute('''
-            INSERT INTO  Convo(User_id,U_Messg,AI_res )
-            VALUES (?, ?, ?)
-        ''', (user_id, User_messg,Ai_response))
-    conn.commit()
+        csr.execute('''
+            INSERT INTO  Convo(User, Aires, UserId )
+            VALUES (?, ? , ?)
+        ''', (UserM, AiRes, UserId))
+        conn.commit()
 
-    conn.close()
-    return True
-  except Exception as e:
-    print("Database error:", e)
-    return False
+        conn.close()
+        return True
+
+    except Exception as e:
+        print("Db error ",e)
+        return False
 
 
-def GiveContext(userId:int|None,ContextLen:int= 10 )->list:
-  """
-  context len means the ammount of messge you want to give to ai as
-  a context this will contain both ai and user response and queries
-  """
-  try:
-    conn = sqlite3.connect("Convos.db")
-    csr = conn.cursor()
+def Retrieve(UserId: int, limit: int = 5):
+    try:
+        conn = sqlite3.connect("Convos.db")
+        csr = conn.cursor()
+        csr.execute('''
+            SELECT User, Aires FROM Convo
+            WHERE UserId = ?
+            ORDER BY Id DESC
+            LIMIT ?
+        ''', (UserId, limit))
+        rows = csr.fetchall()
+        conn.close()
+        # Reverse to keep chronological order
+        return rows[::-1]
+    except Exception as e:
+        print("Db error (retrieve):", e)
+        return []
 
-    csr.execute("SELECT U_Messg, AI_res FROM Convo WHERE User_id = ?", (userId,))
-    conversations = csr.fetchall()
 
-    conn.close()
-
-    return conversations[-ContextLen:]
-
-  except Exception as e:
-    print("Database fetch error:", e)
-    return []
+def BuildPrompt(memory: list, new_user_message: str) -> str:
+    prompt = "### Conversation History:\n"
+    for user, ai in memory:
+        prompt += f"User: {user}\nAI: {ai}\n"
+    prompt += "\n### New Message:\n"
+    prompt += f"User: {new_user_message}\nAI:"
+    return prompt

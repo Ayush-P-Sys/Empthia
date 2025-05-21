@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify,Response, session ,redirect,url_for
 import ollama
-from ModelSlection_Response import Model_Reply
+from ModelSlection_Response import *
 from Login_Signup import *
 
 app = Flask(__name__, template_folder="template/")
@@ -96,12 +96,13 @@ def ask():
     data = request.get_json()
     user_input = data.get("message", "")
     model_name = data.get("model","")
+    c_His_len = 5  # add a button or something and get this from user it will determine how much chat history we need to give to ai it include both ai res and user message
 
     if not user_input.strip():
         return jsonify({"error": "Message cannot be empty"}), 400
 
 
-    response = Model_Reply(user_id,10, model_name, user_input)
+    response = ModelSel(user_id, user_input,c_His_len,model_name)
 
     return jsonify({"response": response})
 
